@@ -1,16 +1,17 @@
 import boto3
 import os
+import json
+secretsmanager = boto3.client("secretsmanager", region_name=os.getenv("AWS_REGION", "us-east-1"))
 
-ec2 = boto3.client("ec2")
+secret_response = secretsmanager.get_secret_value(SecretId="cpd-coursework-secret")
+secret_data = json.loads(secret_response["SecretString"])
 
 # Replace with your key pair and security group
-KEY_NAME = "your-keypair-name"
-SECURITY_GROUP_ID = "your-sg-id"
-INSTANCE_PROFILE_ARN = "your-instance-profile-arn"
-AMI_ID = "ami-0c55b159cbfafe1f0"  # Amazon Linux 2 (eu-west-2)
+KEY_NAME = "CPD"
+AMI_ID = "ami-0c02fb55956c7d316"
 
-GITHUB_USERNAME = os.getenv("GITHUB_USERNAME")
-GITHUB_REPO = os.getenv("GITHUB_REPO")
+GITHUB_USERNAME = secret_data.get("GITHUB_USERNAME")
+GITHUB_REPO = secret_data.get("GITHUB_REPO")
 STUDENT_ID = os.getenv("STUDENT_ID", "00000000")
 
 BASE_URL = f"https://raw.githubusercontent.com/{GITHUB_USERNAME}/{GITHUB_REPO}/main/cpd_coursework"
@@ -50,8 +51,6 @@ def launch_instance():
         MinCount=1,
         MaxCount=1,
         KeyName=KEY_NAME,
-        SecurityGroupIds=[SECURITY_GROUP_ID],
-        IamInstanceProfile={'Arn': INSTANCE_PROFILE_ARN},
         UserData=USER_DATA,
         TagSpecifications=[
             {

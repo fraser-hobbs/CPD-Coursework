@@ -6,10 +6,14 @@ s3 = boto3.client("s3")
 rekognition = boto3.client("rekognition")
 sns = boto3.client("sns")
 dynamodb = boto3.resource("dynamodb")
+secretsmanager = boto3.client("secretsmanager")
 
-BUCKET = os.environ["BUCKET_NAME"]
-TABLE_NAME = f"FaceComparisonResults-{os.environ['STUDENT_ID']}"
-SNS_TOPIC_ARN = os.environ["TOPIC_ARN"]
+secret_response = secretsmanager.get_secret_value(SecretId="cpd-coursework-secret")
+secret_data = json.loads(secret_response["SecretString"])
+
+BUCKET = secret_data["BUCKET_NAME"]
+TABLE_NAME = f"FaceComparisonResults-{secret_data['STUDENT_ID']}"
+SNS_TOPIC_ARN = secret_data["TOPIC_ARN"]
 GROUP_PHOTO_KEY = "groupphoto.png"
 
 def lambda_handler(event, context):
@@ -60,6 +64,12 @@ def lambda_handler(event, context):
                 TopicArn=SNS_TOPIC_ARN,
                 Subject="No face match & image is too dark",
                 Message=f"Image '{target_key}' had no face match and brightness {brightness:.2f}"
+            )
+        elif similarity >= 80:
+            sns.publish(
+                TopicArn=SNS_TOPIC_ARN,
+                Subject="Face match detected",
+                Message=f"Image '{target_key}' matched a face in the group with similarity {similarity:.2f}%"
             )
 
     return {

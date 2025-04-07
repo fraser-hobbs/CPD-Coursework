@@ -6,7 +6,7 @@ from aws_cdk import (
     aws_lambda as _lambda,
     aws_iam as iam,
     aws_lambda_event_sources as sources,
-
+    aws_secretsmanager as secretsmanager
 )
 from constructs import Construct
 from aws_cdk import RemovalPolicy
@@ -17,6 +17,13 @@ class InfraStack(Stack):
         super().__init__(scope, construct_id, **kwargs)
 
         student_id = self.node.try_get_context("student_id")
+
+        secret = secretsmanager.Secret.from_secret_name_v2(
+            self, "CourseworkSecret", "cpd-coursework-secret"
+        )
+
+        # Use the default LabRole provided by AWS Learner Lab
+        self.ec2_instance_profile_arn = "arn:aws:iam::337588635920:instance-profile/LabInstanceProfile"
 
         # S3 Bucket
         image_bucket = s3.Bucket(
@@ -49,7 +56,8 @@ class InfraStack(Stack):
                 "BUCKET_NAME": image_bucket.bucket_name,
                 "QUEUE_URL": image_queue.queue_url,
                 "TOPIC_ARN": notification_topic.topic_arn,
-                "STUDENT_ID": student_id,
+                "STUDENT_ID": secret.secret_value_from_json("STUDENT_ID").to_string(),
+                "EMAIL": secret.secret_value_from_json("EMAIL").to_string(),
             }
         )
 
@@ -64,7 +72,8 @@ class InfraStack(Stack):
                 "BUCKET_NAME": image_bucket.bucket_name,
                 "QUEUE_URL": image_queue.queue_url,
                 "TOPIC_ARN": notification_topic.topic_arn,
-                "STUDENT_ID": student_id,
+                "STUDENT_ID": secret.secret_value_from_json("STUDENT_ID").to_string(),
+                "EMAIL": secret.secret_value_from_json("EMAIL").to_string(),
             }
         )
 
