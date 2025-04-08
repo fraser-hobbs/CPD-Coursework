@@ -1,58 +1,67 @@
+## CPD Coursework – Face Comparison Project
 
-# Welcome to your CDK Python project!
+This serverless application processes images uploaded to an S3 bucket. When a new image is uploaded, it compares the detected face(s) to those in a predefined group photo using AWS Rekognition. If a match is found, a notification is sent via SNS.
 
-This is a blank project for CDK development with Python.
+This project is designed as part of the Cloud Platform Development coursework to demonstrate understanding of AWS services.
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+## Deployment Guide
 
-This project is set up like a standard Python project.  The initialization
-process also creates a virtualenv within this project, stored under the `.venv`
-directory.  To create the virtualenv it assumes that there is a `python3`
-(or `python` for Windows) executable in your path with access to the `venv`
-package. If for any reason the automatic creation of the virtualenv fails,
-you can create the virtualenv manually.
+This guide outlines the steps required to deploy the CPD_Coursework project to your AWS account.
 
-To manually create a virtualenv on MacOS and Linux:
+### Prerequisites
 
-```
-$ python3 -m venv .venv
-```
+- AWS CLI installed and configured.
+- Python 3.11 installed.
+- An AWS account with permissions to deploy Lambda, S3, SNS, SQS, DynamoDB, and Rekognition services.
 
-After the init process completes and the virtualenv is created, you can use the following
-step to activate your virtualenv.
+### Step 1: Clone the Repository
 
-```
-$ source .venv/bin/activate
+```bash
+git clone https://github.com/fraser-hobbs/CPD_Coursework.git
+cd CPD_Coursework
 ```
 
-If you are a Windows platform, you would activate the virtualenv like this:
+### Step 2: Configure Environment
+
+Create a `.env` file in the project root with the following contents:
 
 ```
-% .venv\Scripts\activate.bat
-```
-
-Once the virtualenv is activated, you can install the required dependencies.
-
-```
-$ pip install -r requirements.txt
-```
-
-At this point you can now synthesize the CloudFormation template for this code.
+STUDENT_ID=
+AWS_PROFILE=(this refers to the ~/.aws/credentials use 'default' if not set) 
+AWS_REGION=us-east-1
+AWS_ACCOUNT_ID=
+GITHUB_USERNAME=fraser-hobbs (leave as this unless forked repo)
+GITHUB_REPO=CPD-Coursework (leave as this unless forked repo)
+SNS_EMAIL=john.doe@example.com
 
 ```
-$ cdk synth
+
+These variables are used for consistent naming and deployment.
+
+### Step 3: Set Up Python Environment
+
+Create a virtual environment and install dependencies:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate  # Use `.venv\Scripts\activate` on Windows
+pip install -r requirements.txt
 ```
 
-To add additional dependencies, for example other CDK libraries, just add
-them to your `setup.py` file and rerun the `pip install -r requirements.txt`
-command.
+### Step 4: Deploy the Application
 
-## Useful commands
+Use the provided deployment script:
 
- * `cdk ls`          list all stacks in the app
- * `cdk synth`       emits the synthesized CloudFormation template
- * `cdk deploy`      deploy this stack to your default AWS account/region
- * `cdk diff`        compare deployed stack with current state
- * `cdk docs`        open CDK documentation
+```bash
+python deploy.py
+```
 
-Enjoy!
+To tear down the infrastructure:
+
+```bash
+python destroy.py
+```
+
+## Author
+
+Fraser Hobbs

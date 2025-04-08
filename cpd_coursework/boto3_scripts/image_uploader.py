@@ -11,13 +11,13 @@ bucket_name = f"face-comparison-bucket-{student_id}"
 
 s3 = boto3.client("s3")
 
-# List of images to upload
+# List of images to upload - commented out non-essential images
 image_files = [
-    "image1.jpg",
+    # "image1.jpg",
     "image2.jpg",
-    "image3.jpg",
+    # "image3.jpg",
     "image4.jpg",
-    "image5.jpg"
+    # "image5.jpg"
 ]
 
 def upload_image(file_to_upload):

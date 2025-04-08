@@ -21,12 +21,12 @@ outputs = response["Stacks"][0]["Outputs"]
 
 lambda_arn = None
 for output in outputs:
-    if output["OutputKey"] == "FaceComparisonFunctionArn":
+    if output["OutputKey"] == "NotificationFunctionArn":
         lambda_arn = output["OutputValue"]
         break
 
 if not lambda_arn:
-    raise Exception("FaceComparisonFunctionArn not found in stack outputs")
+    raise Exception("NotificationFunctionArn not found in stack outputs")
 
 # Get the DynamoDB stream ARN
 dynamodb = boto3.client("dynamodb", region_name=region)
