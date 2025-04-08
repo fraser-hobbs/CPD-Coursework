@@ -1,3 +1,0 @@
-aws-cdk-lib
-constructs==10.4.2
-python-dotenv

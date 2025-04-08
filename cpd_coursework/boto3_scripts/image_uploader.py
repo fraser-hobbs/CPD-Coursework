@@ -30,6 +30,9 @@ def upload_image(file_to_upload):
         print(f"❌ Failed to upload {file_to_upload}: {e}")
 
 if __name__ == "__main__":
+
+    upload_image("groupphoto.png")
+
     for image in image_files:
         upload_image(image)
         time.sleep(30)

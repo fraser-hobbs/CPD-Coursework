@@ -1,0 +1,21 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Bootstrap stack to create an S3 bucket for Lambda artifacts
+
+Parameters:
+  StudentID:
+    Type: String
+    Default: s2341289
+    Description: Student ID used to tag resources.
+
+Resources:
+  LambdaArtifactsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub lambda-artifacts-${StudentID}
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+
+Outputs:
+  LambdaBucketName:
+    Description: Bucket to upload Lambda ZIPs
+    Value: !Ref LambdaArtifactsBucket

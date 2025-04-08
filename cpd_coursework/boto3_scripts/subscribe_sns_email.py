@@ -7,7 +7,7 @@ load_dotenv()
 student_id = os.getenv("STUDENT_ID", "00000000")
 topic_name = f"face-comparison-topic-{student_id}"
 
-sns = boto3.client("sns")
+sns = boto3.client("sns", region_name=f"{os.getenv("AWS_REGION", "us-east-1")}")
 
 def get_topic_arn(name):
     response = sns.list_topics()

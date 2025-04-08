@@ -1,10 +1,13 @@
 import boto3
 import os
 import botocore.exceptions
+from dotenv import load_dotenv
+load_dotenv()
 
-student_id = os.getenv("STUDENT_ID", "00000000")
+student_id = os.environ["STUDENT_ID"]
 
-dynamodb = boto3.client("dynamodb", region_name=os.getenv("AWS_REGION", "us-east-1"))
+region = os.environ["AWS_REGION"]
+dynamodb = boto3.client("dynamodb", region_name=region)
 
 table_name = f"FaceComparisonResults-{student_id}"
 
@@ -13,8 +16,11 @@ try:
         TableName=table_name,
         KeySchema=[{"AttributeName": "ImageID", "KeyType": "HASH"}],
         AttributeDefinitions=[{"AttributeName": "ImageID", "AttributeType": "S"}],
-        BillingMode="PAY_PER_REQUEST"
-
+        BillingMode="PAY_PER_REQUEST",
+        StreamSpecification={
+            "StreamEnabled": True,
+            "StreamViewType": "NEW_IMAGE"
+        }
     )
     print(f"✅ Created table: {table_name}")
 except botocore.exceptions.ClientError as e:

@@ -1,14 +1,14 @@
 import boto3
 import os
 import json
+
 secretsmanager = boto3.client("secretsmanager", region_name=os.getenv("AWS_REGION", "us-east-1"))
 
+ec2 = boto3.client("ec2", region_name=os.getenv("AWS_REGION", "us-east-1"))
 secret_response = secretsmanager.get_secret_value(SecretId="cpd-coursework-secret")
 secret_data = json.loads(secret_response["SecretString"])
 
-# Replace with your key pair and security group
-KEY_NAME = "CPD"
-AMI_ID = "ami-0c02fb55956c7d316"
+AMI_ID = "ami-00a929b66ed6e0de6"
 
 GITHUB_USERNAME = secret_data.get("GITHUB_USERNAME")
 GITHUB_REPO = secret_data.get("GITHUB_REPO")
@@ -44,18 +44,34 @@ echo "STUDENT_ID={STUDENT_ID}" > .env
 python3 image_uploader.py > /var/log/image_upload.log 2>&1 &
 '''
 
+iam = boto3.client("iam", region_name=os.getenv("AWS_REGION", "us-east-1"))
+INSTANCE_PROFILE_NAME = "LabInstanceProfile"
+
+def ensure_instance_profile():
+    try:
+        iam.get_instance_profile(InstanceProfileName=INSTANCE_PROFILE_NAME)
+    except iam.exceptions.NoSuchEntityException:
+        iam.create_instance_profile(InstanceProfileName=INSTANCE_PROFILE_NAME)
+        iam.add_role_to_instance_profile(
+            InstanceProfileName=INSTANCE_PROFILE_NAME,
+            RoleName="LabRole"
+        )
+
+ensure_instance_profile()
+
 def launch_instance():
     response = ec2.run_instances(
         ImageId=AMI_ID,
         InstanceType='t2.micro',
+        KeyName='vockey',
         MinCount=1,
         MaxCount=1,
-        KeyName=KEY_NAME,
         UserData=USER_DATA,
+        IamInstanceProfile={'Name': INSTANCE_PROFILE_NAME},
         TagSpecifications=[
             {
                 'ResourceType': 'instance',
-                'Tags': [{'Key': 'Name', 'Value': 'CPD-Coursework-EC2'}]
+                'Tags': [{'Key': 'Name', 'Value': f'CPD-Coursework-EC2-{STUDENT_ID}'}]
             }
         ]
     )
@@ -63,5 +79,4 @@ def launch_instance():
     instance_id = response['Instances'][0]['InstanceId']
     print(f"✅ EC2 instance launched: {instance_id}")
 
-if __name__ == "__main__":
-    launch_instance()
+launch_instance()
