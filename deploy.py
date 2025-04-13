@@ -69,6 +69,10 @@ def deploy_main_stack():
         "--stack-name", STACK_NAME,
         "--profile", AWS_PROFILE,
         "--region", AWS_REGION,
+        "--capabilities", "CAPABILITY_NAMED_IAM",
+        "--parameter-overrides",
+        f"StudentID={STUDENT_ID}",
+        f"RoleArn=arn:aws:iam::{ACCOUNT_ID}:role/LabRole",
     ], check=True)
     print(f"✅ Stack {STACK_NAME} deployed successfully.")
 

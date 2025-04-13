@@ -1,0 +1,104 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CPD Coursework Stack without role creation
+
+Parameters:
+  StudentID:
+    Type: String
+    Description: Student ID used to tag resources.
+  RoleArn:
+    Type: String
+    Description: LabRole to be used for creating resources within learner Lab
+
+Resources:
+  ImageBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub face-comparison-bucket-${StudentID}
+
+  ImageQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub face-comparison-queue-${StudentID}
+
+  NotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub face-comparison-topic-${StudentID}
+
+  S3ToSQSQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref ImageQueue
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+            - Effect: Allow
+              Principal:
+                Service: s3.amazonaws.com
+              Action: sqs:SendMessage
+              Resource: !GetAtt ImageQueue.Arn
+              Condition:
+                ArnLike:
+                  aws:SourceArn: !GetAtt ImageBucket.Arn
+
+  FaceComparisonFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub FaceComparisonFunction-${StudentID}
+      Handler: app.lambda_handler
+      Runtime: python3.11
+      Role: !Ref RoleArn
+      Code:
+        S3Bucket: !Sub lambda-artifacts-${StudentID}
+        S3Key: face_comparison_lambda.zip
+
+  FaceComparisonEventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !GetAtt ImageQueue.Arn
+      FunctionName: !Ref FaceComparisonFunction
+
+  NotificationFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub NotificationFunction-${StudentID}
+      Handler: app.lambda_handler
+      Runtime: python3.11
+      Role: !Ref RoleArn
+      Code:
+        S3Bucket: !Sub lambda-artifacts-${StudentID}
+        S3Key: notification_lambda.zip
+
+  S3BucketLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref FaceComparisonFunction
+      Principal: s3.amazonaws.com
+      SourceArn: !GetAtt ImageBucket.Arn
+
+Outputs:
+  BucketName:
+    Description: "S3 Bucket used for image uploads"
+    Value: !Ref ImageBucket
+
+  QueueName:
+    Description: "SQS Queue for image events"
+    Value: !Ref ImageQueue
+
+  QueueArn:
+    Description: "ARN of the SQS Queue"
+    Value: !GetAtt ImageQueue.Arn
+
+  TopicName:
+    Description: "SNS Topic for notifications"
+    Value: !Ref NotificationTopic
+
+  FaceComparisonFunctionArn:
+    Description: "ARN of the Face Comparison Lambda Function"
+    Value: !GetAtt FaceComparisonFunction.Arn
+
+  NotificationFunctionArn:
+    Description: "ARN of the Notification Lambda Function"
+    Value: !GetAtt NotificationFunction.Arn
